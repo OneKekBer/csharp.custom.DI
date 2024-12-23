@@ -3,20 +3,42 @@
 
 var container = new DependencyContainer();
 
-container.AddTransient<HelloService>();
-container.AddTransient<ProviderService>();
-container.AddTransient<WowService>();
-container.AddSingleton<MainService>();
+// container.AddTransient<HelloService>();
+// container.AddTransient<ProviderService>();
+// container.AddTransient<WowService>();
+// container.AddSingleton<MainService>();
 
 var resolver = new DependencyProvider(container);
 
-var helloService = resolver.GetService<HelloService>();
-var providerService = resolver.GetService<ProviderService>();
-var mainService = resolver.GetService<MainService>();
+// var helloService = resolver.GetService<HelloService>();
+// var providerService = resolver.GetService<ProviderService>();
+// var mainService = resolver.GetService<MainService>();
+//
+// helloService.Print();
+// providerService.Provide();
+// mainService.Start();
 
-helloService.Print();
-providerService.Provide();
-mainService.Start();
+
+
+// Регистрируем сервисы
+container.AddSingleton<CounterService>();
+container.AddTransient<StatelessService>();
+
+var counter1 = resolver.GetService<CounterService>();
+Console.WriteLine($"Singletons after first resolution: {string.Join(", ", container._singletons.Keys)}");
+
+var counter2 = resolver.GetService<CounterService>();
+Console.WriteLine($"Singletons after second resolution: {string.Join(", ", container._singletons.Keys)}");
+
+Console.WriteLine("Counter 1: " + counter1.Increment()); // Ожидаем 1
+Console.WriteLine("Counter 2: " + counter2.Increment()); // Ожидаем 2
+
+// Проверяем Transient
+var stateless1 = resolver.GetService<StatelessService>();
+var stateless2 = resolver.GetService<StatelessService>();
+
+stateless1.DoWork(); // Ожидаем новый экземпляр
+stateless2.DoWork(); // Ожидаем другой новый экземпляр
 
 
 public class DependencyProvider
@@ -33,70 +55,51 @@ public class DependencyProvider
         if(constructor == null)
             throw new Exception($"Type '{type.FullName}' does not have a default constructor.");
 
-        var parameters = type.GetConstructors().First().GetParameters();
+        var parameters = constructor.GetParameters();
         
-        if (parameters.Count() > 0)
+        var instances = parameters.Select(param =>
         {
-            object[] instances = new object[parameters.Count()];
-            for (int i = 0; i < parameters.Count(); i++)
-            {
-                var parameterType = parameters[i].ParameterType;
-                object instance = null;
-
-                if (_container.IsSingletonAndExists(parameterType))
-                {
-                    instance = _container.GetSingleton(parameterType);
-                    instances[i] = instance;
-                    continue;   
-                }
-               
-                instance = Activator.CreateInstance(parameterType);
-                
-                if(_container.IsSingleton(parameterType))
-                    _container.SaveSingleton(parameterType, instance);
+            var parameterType = param.ParameterType;
+            if (_container.IsSingletonAndExists(parameterType))
+                return _container.GetSingleton(parameterType);
                     
-                instances[i] = instance;
-            }
+            var instance = Activator.CreateInstance(parameterType);
             
-            return Activator.CreateInstance(type, instances);
-        }
-        return Activator.CreateInstance(type);
+            if(_container.IsSingleton(parameterType))
+                _container.SaveSingleton(parameterType, instance);
+            
+            return instance;
+        }).ToArray();
+        
+        return Activator.CreateInstance(type, instances);
     }
     
     public T GetService<T>()
     {
         var type = _container.GetType(typeof(T));
-        
+
         if (_container.IsSingletonAndExists<T>())
-            return (T)_container.GetSingleton<T>();
+            return _container.GetSingleton<T>();
         
         var constructor = type.GetConstructors().FirstOrDefault();
         if(constructor == null)
             throw new Exception($"Type '{type.FullName}' does not have a default constructor.");
         
-        var parameters = type.GetConstructors().First().GetParameters();
-        if (parameters.Count() > 0)
-        {
-            object[] instances = new object[parameters.Count()];
-            
-            for (int i = 0; i < parameters.Count(); i++)
-            {
-                var parameterType = parameters[i].ParameterType;
-                
-                var instance = GetInstance(parameterType);
-                instances[i] = instance;
-            }
-            
-            return (T)Activator.CreateInstance(type, instances);
-        }
-        return (T)Activator.CreateInstance(type);
+        var parameters = constructor.GetParameters();
+       
+        var instances = parameters.Select(param => GetInstance(param.ParameterType)).ToArray();
+        var service = (T)Activator.CreateInstance(type, instances);
+        
+        if(_container.IsSingleton(type))
+            _container.SaveSingleton(typeof(T), service);
+        return service;
     }
 }
 
-public class DependencyContainer
+public class DependencyContainer // i think it`s bad, beacuse single responsibility 
 {
     private readonly List<Type> _types = new List<Type>();
-    private readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
+    public readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
     
     private void AddService<T>()
     {
@@ -136,23 +139,29 @@ public class DependencyContainer
 
     public void SaveSingleton(Type type, object instance)
     {
+        Console.WriteLine($"Saving singleton for type {type.FullName}");
         _singletons[type] = instance;
     }
     
-    public object GetSingleton<T>()
+    public T GetSingleton<T>()
     {
-        return _singletons.TryGetValue(typeof(T), out var instance);
+        _singletons.TryGetValue(typeof(T), out var instance);
+        return (T)instance;
     }
     
     public object GetSingleton(Type type)
     {
-        return _singletons.TryGetValue(type, out var instance);
+        _singletons.TryGetValue(type, out var instance);
+        Console.WriteLine($"Retrieving singleton for type {type.FullName}: {instance}");
+        return instance;
     }
     
     public Type GetType(Type type)
     {
         return _types.First(x=> x.Name == type.Name);
     }
+    
+    
 }
 
 
@@ -205,3 +214,22 @@ public class HelloService
         Console.WriteLine("Hello, World!");
     }
 }
+
+public class CounterService
+{
+    private int _counter = 0;
+    
+    public int Increment()
+    {
+        return ++_counter;
+    }
+}
+
+public class StatelessService
+{
+    public void DoWork()
+    {
+        Console.WriteLine($"StatelessService: {Guid.NewGuid()}");
+    }
+}
+
