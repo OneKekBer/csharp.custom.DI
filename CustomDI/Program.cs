@@ -53,7 +53,7 @@ public class DependencyProvider
     {
         var constructor = type.GetConstructors().FirstOrDefault();
         if(constructor == null)
-            throw new Exception($"Type '{type.FullName}' does not have a default constructor.");
+            throw new Exception($"Type '{type.FullName}' doesnt have constructor");
 
         var parameters = constructor.GetParameters();
         
@@ -83,7 +83,7 @@ public class DependencyProvider
         
         var constructor = type.GetConstructors().FirstOrDefault();
         if(constructor == null)
-            throw new Exception($"Type '{type.FullName}' does not have a default constructor.");
+            throw new Exception($"Type '{type.FullName}' doesnt have constructor");
         
         var parameters = constructor.GetParameters();
        
