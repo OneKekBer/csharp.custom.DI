@@ -16,8 +16,8 @@ var mainService = resolver.GetService<MainService>();
 
 helloService.Print();
 providerService.Provide();
-
 mainService.Start();
+
 
 public class DependencyProvider
 {
@@ -29,6 +29,10 @@ public class DependencyProvider
 
     private object GetInstance(Type type)
     {
+        var constructor = type.GetConstructors().FirstOrDefault();
+        if(constructor == null)
+            throw new Exception($"Type '{type.FullName}' does not have a default constructor.");
+
         var parameters = type.GetConstructors().First().GetParameters();
         
         if (parameters.Count() > 0)
@@ -37,8 +41,20 @@ public class DependencyProvider
             for (int i = 0; i < parameters.Count(); i++)
             {
                 var parameterType = parameters[i].ParameterType;
+                object instance = null;
+
+                if (_container.IsSingletonAndExists(parameterType))
+                {
+                    instance = _container.GetSingleton(parameterType);
+                    instances[i] = instance;
+                    continue;   
+                }
+               
+                instance = Activator.CreateInstance(parameterType);
                 
-                var instance = Activator.CreateInstance(parameterType);
+                if(_container.IsSingleton(parameterType))
+                    _container.SaveSingleton(parameterType, instance);
+                    
                 instances[i] = instance;
             }
             
@@ -50,6 +66,14 @@ public class DependencyProvider
     public T GetService<T>()
     {
         var type = _container.GetType(typeof(T));
+        
+        if (_container.IsSingletonAndExists<T>())
+            return (T)_container.GetSingleton<T>();
+        
+        var constructor = type.GetConstructors().FirstOrDefault();
+        if(constructor == null)
+            throw new Exception($"Type '{type.FullName}' does not have a default constructor.");
+        
         var parameters = type.GetConstructors().First().GetParameters();
         if (parameters.Count() > 0)
         {
@@ -67,21 +91,62 @@ public class DependencyProvider
         }
         return (T)Activator.CreateInstance(type);
     }
-    
 }
 
 public class DependencyContainer
 {
     private readonly List<Type> _types = new List<Type>();
+    private readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
+    
+    private void AddService<T>()
+    {
+        _types.Add(typeof(T));
+    }
 
     public void AddTransient<T>()
     {
-        _types.Add(typeof(T));
+        AddService<T>();
     }
     
     public void AddSingleton<T>()
     {
-        
+        AddService<T>();
+        _singletons.Add(typeof(T), null);
+    }
+
+    public bool IsSingleton<T>()
+    {
+        return _singletons.ContainsKey(typeof(T));
+    }
+    
+    public bool IsSingleton(Type type)
+    {
+        return _singletons.ContainsKey(type);
+    }
+    
+    public bool IsSingletonAndExists<T>()
+    {
+        return _singletons.ContainsKey(typeof(T)) && _singletons[typeof(T)] is not null;
+    }
+    
+    public bool IsSingletonAndExists(Type type)
+    {
+        return _singletons.ContainsKey(type) && _singletons[type] is not null;
+    }
+
+    public void SaveSingleton(Type type, object instance)
+    {
+        _singletons[type] = instance;
+    }
+    
+    public object GetSingleton<T>()
+    {
+        return _singletons.TryGetValue(typeof(T), out var instance);
+    }
+    
+    public object GetSingleton(Type type)
+    {
+        return _singletons.TryGetValue(type, out var instance);
     }
     
     public Type GetType(Type type)
@@ -91,9 +156,6 @@ public class DependencyContainer
 }
 
 
-/// <summary>
-/// /////////////////////////////////////
-/// </summary>
 public class MainService
 {
     private readonly WowService _wowService;
