@@ -10,6 +10,9 @@ public sealed class DependencyProvider
 
     private object GetInstance(Type type)
     {
+        if(!_container.IsRegistered(type))
+            throw new Exception($"Type '{type.FullName}' doesnt have a registered parameter");
+        
         var constructor = type.GetConstructors().FirstOrDefault();
         if(constructor == null)
             throw new Exception($"Type '{type.FullName}' doesnt have constructor");
@@ -19,6 +22,9 @@ public sealed class DependencyProvider
         var instances = parameters.Select(param =>
         {
             var parameterType = param.ParameterType;
+            
+           
+                
             if (_container.IsSingletonAndExists(parameterType))
                 return _container.GetSingleton(parameterType);
                     

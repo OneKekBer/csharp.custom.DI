@@ -2,12 +2,13 @@ namespace CustomDI.Components;
 
 public class DependencyContainer // i think it`s bad, beacuse single responsibility 
 {
-    private readonly List<Type> _types = new List<Type>();
+    private readonly HashSet<Type> _types = new HashSet<Type>();
     private readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
     
     private void AddService<T>()
     {
         _types.Add(typeof(T));
+        Console.WriteLine(_types.Count);
     }
 
     public void AddTransient<T>()
@@ -59,7 +60,10 @@ public class DependencyContainer // i think it`s bad, beacuse single responsibil
     {
         return _types.First(x=> x.Name == type.Name);
     }
-    
-    
+
+    public bool IsRegistered(Type type)
+    {
+        return _types.Contains(type);
+    }
 }
 
