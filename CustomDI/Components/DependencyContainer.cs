@@ -1,69 +1,58 @@
 namespace CustomDI.Components;
 
-public class DependencyContainer // i think it`s bad, beacuse single responsibility 
+public sealed class DependencyContainer // i think it`s bad, beacuse single responsibility 
 {
-    private readonly HashSet<Type> _types = new HashSet<Type>();
-    private readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
+    private readonly Dictionary<Type, InstanceInfo> _data = new Dictionary<Type, InstanceInfo>();
     
-    private void AddService<T>()
-    {
-        _types.Add(typeof(T));
-        Console.WriteLine(_types.Count);
-    }
-
     public void AddTransient<T>()
     {
-        AddService<T>();
+        var type = typeof(T);
+        if(!IsRegistered(type))
+            _data.Add(type, new InstanceInfo(DependencyType.Transient, type));
+    }
+    
+    public bool IsRegistered(Type type)
+    {
+        return _data.ContainsKey(type);
     }
     
     public void AddSingleton<T>()
     {
-        AddService<T>();
-        _singletons.Add(typeof(T), null);
+        var type = typeof(T);
+        if(!IsRegistered(type))
+            _data.Add(type, new InstanceInfo(DependencyType.Singleton, type));
     }
     
     public bool IsSingleton(Type type)
     {
-        return _singletons.ContainsKey(type);
-    }
-    
-    public bool IsSingletonAndExists<T>()
-    {
-        return _singletons.ContainsKey(typeof(T)) && _singletons[typeof(T)] is not null;
+        return _data.ContainsKey(type) 
+               && _data[type].DependencyType == DependencyType.Singleton;
     }
     
     public bool IsSingletonAndExists(Type type)
     {
-        return _singletons.ContainsKey(type) && _singletons[type] is not null;
+        return _data.ContainsKey(type) 
+               && _data[type].DependencyType == DependencyType.Singleton 
+               && _data[type].Instance != null;
     }
 
     public void SaveSingleton(Type type, object instance)
     {
         Console.WriteLine($"Saving singleton for type {type.FullName}");
-        _singletons[type] = instance;
-    }
-    
-    public T GetSingleton<T>()
-    {
-        _singletons.TryGetValue(typeof(T), out var instance);
-        return (T)instance;
+        _data[type].Instance = instance;
     }
     
     public object GetSingleton(Type type)
     {
-        _singletons.TryGetValue(type, out var instance);
+        _data.TryGetValue(type, out var instance);
         Console.WriteLine($"Retrieving singleton for type {type.FullName}: {instance}");
         return instance;
     }
-    
-    public Type GetType(Type type)
-    {
-        return _types.First(x=> x.Name == type.Name);
-    }
 
-    public bool IsRegistered(Type type)
+    public InstanceInfo GetInfo(Type type)
     {
-        return _types.Contains(type);
+        _data.TryGetValue(type, out var info);
+        return info;
     }
 }
 

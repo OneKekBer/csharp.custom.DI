@@ -23,8 +23,6 @@ public sealed class DependencyProvider
         {
             var parameterType = param.ParameterType;
             
-           
-                
             if (_container.IsSingletonAndExists(parameterType))
                 return _container.GetSingleton(parameterType);
                     
@@ -41,10 +39,11 @@ public sealed class DependencyProvider
         
     public T GetService<T>()
     {
-        var type = _container.GetType(typeof(T));
-
-        if (_container.IsSingletonAndExists<T>())
-            return _container.GetSingleton<T>();
+        var info = _container.GetInfo(typeof(T));
+        var type = info.InstanceType;
+        
+        if (_container.IsSingletonAndExists(type))
+            return (T)_container.GetSingleton(type);
         
         var constructor = type.GetConstructors().FirstOrDefault();
         if(constructor == null)
