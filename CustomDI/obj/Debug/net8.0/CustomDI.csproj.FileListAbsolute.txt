@@ -12,3 +12,4 @@ C:\Users\Ilya\RiderProjects\CustomDI\CustomDI\obj\Debug\net8.0\refint\CustomDI.d
 C:\Users\Ilya\RiderProjects\CustomDI\CustomDI\obj\Debug\net8.0\CustomDI.pdb
 C:\Users\Ilya\RiderProjects\CustomDI\CustomDI\obj\Debug\net8.0\CustomDI.genruntimeconfig.cache
 C:\Users\Ilya\RiderProjects\CustomDI\CustomDI\obj\Debug\net8.0\ref\CustomDI.dll
+C:\Users\Ilya\RiderProjects\CustomDI\CustomDI\obj\Debug\net8.0\CustomDI.sourcelink.json
