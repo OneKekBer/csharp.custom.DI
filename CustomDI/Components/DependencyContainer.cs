@@ -42,11 +42,11 @@ public sealed class DependencyContainer // i think it`s bad, beacuse single resp
         _data[type].Instance = instance;
     }
     
-    public object GetSingleton(Type type)
+    public Object GetSingletonInstance(Type type)
     {
-        _data.TryGetValue(type, out var instance);
-        Console.WriteLine($"Retrieving singleton for type {type.FullName}: {instance}");
-        return instance;
+        _data.TryGetValue(type, out var instanceInfo);
+        Console.WriteLine($"Retrieving singleton for type {type.FullName}: {instanceInfo.Instance}");
+        return instanceInfo.Instance;
     }
 
     public InstanceInfo GetInfo(Type type)
