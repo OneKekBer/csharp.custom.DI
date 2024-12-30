@@ -36,8 +36,9 @@ public sealed class DependencyContainer // i think it`s bad, beacuse single resp
                && _data[type].Instance != null;
     }
 
-    public void SaveSingleton(Type type, object instance)
+    public void SaveSingleton(object instance)
     {
+        var type = instance.GetType();
         Console.WriteLine($"Saving singleton for type {type.FullName}");
         _data[type].Instance = instance;
     }

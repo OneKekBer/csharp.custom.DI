@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CustomDI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b00d002dcd7390d9b99e4c00c9f80a9f06f1fd76")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3faa6a53bb76ac160b374885a7d3d3a7fd022386")]
 [assembly: System.Reflection.AssemblyProductAttribute("CustomDI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CustomDI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

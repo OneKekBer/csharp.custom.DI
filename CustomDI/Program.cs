@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading.Channels;
 using CustomDI.Components;
 
 var stop = Stopwatch.StartNew();
@@ -7,12 +8,14 @@ var container = new DependencyContainer();
 var resolver = new DependencyProvider(container);
 
 container.AddTransient<Service1>();
-container.AddTransient<Service1>();
 container.AddTransient<Service2>();
+container.AddTransient<Service3>();
+container.AddTransient<Service4>();
 
-var service2 = resolver.GetService<Service2>();
 
-service2.DoWork();
+var service3 = resolver.GetService<Service4>();
+
+service3.DoWork();
 stop.Stop();
 Console.WriteLine(stop.Elapsed);
 
@@ -73,7 +76,47 @@ class Service2
     }
 }
 
+class Service3
+{
+    private readonly Service1 _service1;
+    private readonly Service2 _service2;
 
+
+    public Service3(Service1 service1, Service2 service2)
+    {
+        _service1 = service1;
+        _service2 = service2;
+    }
+
+    public void DoWork()
+    {
+        _service1.DoWork();
+        _service2.DoWork();
+        Console.WriteLine("Service3");
+    }
+}
+
+class Service4
+{
+    private readonly Service1 _service1;
+    private readonly Service2 _service2;
+    private readonly Service3 _service3;
+
+    public Service4(Service1 service1, Service2 service2, Service3 service3)
+    {
+        _service1 = service1;
+        _service2 = service2;
+        _service3 = service3;
+    }
+
+    public void DoWork()
+    {
+        _service1.DoWork();
+        _service2.DoWork();
+        _service3.DoWork();
+        Console.WriteLine("Service4");
+    }
+}
 public class SharedCounterService
 {
     private int _counter = 0;
